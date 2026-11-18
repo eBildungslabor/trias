@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schutz · Befähigung · Teilhabe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #FFF6E5;
+    --ink: #111111;
+    --red: #FF3B5C;
+    --cyan: #1EC8F0;
+    --yellow: #FFE14D;
+    --blue: #2F49FF;
+    --dots: rgba(17,17,17,.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- Hintergrund: dezente Rasterpunkte in den Ecken ---------- */
+  .halftone {
+    position: fixed; inset: 0; pointer-events: none;
+    background-image: radial-gradient(var(--dots) 1.6px, transparent 1.8px);
+    background-size: 14px 14px;
+    -webkit-mask-image: radial-gradient(circle at 100% 0%, #000 0, transparent 38%),
+                        radial-gradient(circle at 0% 100%, #000 0, transparent 38%);
+            mask-image: radial-gradient(circle at 100% 0%, #000 0, transparent 38%),
+                        radial-gradient(circle at 0% 100%, #000 0, transparent 38%);
+    transition: opacity 1.2s ease;
+  }
+  .halftone.pop {
+    background-image: radial-gradient(rgba(255,59,92,.35) 2.2px, transparent 2.4px);
+    background-size: 16px 16px;
+    opacity: 0;
+    -webkit-mask-image: radial-gradient(circle at 0% 0%, #000 0, transparent 45%),
+                        radial-gradient(circle at 100% 100%, #000 0, transparent 45%);
+            mask-image: radial-gradient(circle at 0% 0%, #000 0, transparent 45%),
+                        radial-gradient(circle at 100% 100%, #000 0, transparent 45%);
+  }
+  body.phase-b .halftone.pop { opacity: 1; }
+
+  /* ---------- Bühne & Szenen ---------- */
+  .stage { position: relative; width: 100vw; height: 100vh; height: 100dvh; }
+  .scene {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px 16px;
+    text-align: center;
+  }
+  .scene.hidden { visibility: hidden; pointer-events: none; }
+
+  .ch { display: inline-block; will-change: transform, opacity; }
+  .word { display: inline-block; white-space: nowrap; }
+  .sp { display: inline-block; width: .28em; }
+
+  /* ---------- Szene A ---------- */
+  .words {
+    font-family: "Anton", Impact, sans-serif;
+    font-weight: 400;
+    text-transform: uppercase;
+    font-size: clamp(3rem, min(15vw, 15vh), 10rem);
+    line-height: 1.02;
+    letter-spacing: .01em;
+  }
+  .words .line { display: block; }
+  .words .line:nth-child(1) { text-shadow: .05em .05em 0 var(--red); }
+  .words .line:nth-child(2) { text-shadow: .05em .05em 0 var(--cyan); }
+  .words .line:nth-child(3) { text-shadow: .05em .05em 0 var(--yellow); }
+
+  .cta {
+    margin-top: clamp(24px, 6vh, 56px);
+    position: relative;
+    display: flex; align-items: center; gap: 18px;
+    transition: opacity .4s ease, transform .4s ease;
+  }
+  .cta.gone { opacity: 0; transform: scale(.6) rotate(-6deg); pointer-events: none; }
+
+  .finger {
+    font-size: clamp(2.2rem, 6vh, 3.4rem);
+    line-height: 1;
+    filter: drop-shadow(3px 3px 0 var(--ink));
+    animation: hover-finger 1.4s ease-in-out infinite;
+    user-select: none;
+  }
+  @keyframes hover-finger {
+    0%, 100% { transform: translateX(-14px) rotate(-4deg); }
+    50%      { transform: translateX(8px) rotate(3deg); }
+  }
+
+  .go {
+    font-family: "Anton", Impact, sans-serif;
+    font-size: clamp(1.2rem, 3.2vh, 1.7rem);
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--ink);
+    background: var(--yellow);
+    border: 4px solid var(--ink);
+    border-radius: 999px;
+    padding: .55em 1.5em;
+    box-shadow: 6px 6px 0 var(--ink);
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, background .2s;
+  }
+  .go:hover { background: var(--red); color: #fff; transform: translate(-2px,-2px) rotate(-2deg); box-shadow: 8px 8px 0 var(--ink); }
+  .go:active { transform: translate(4px,4px); box-shadow: 2px 2px 0 var(--ink); }
+  .go:focus-visible, .mini:focus-visible { outline: 3px dashed var(--blue); outline-offset: 6px; }
+
+  /* ---------- Szene B ---------- */
+  .north {
+    position: relative;
+    width: clamp(90px, min(22vh, 30vw), 200px);
+    aspect-ratio: 1;
+    margin-bottom: clamp(10px, 3vh, 32px);
+    opacity: 0; transform: scale(0) rotate(-180deg);
+    transition: opacity .6s ease, transform 1s cubic-bezier(.2,1.6,.4,1);
+  }
+  .settled .north { opacity: 1; transform: scale(1) rotate(0); }
+  .rays {
+    position: absolute; inset: -70%;
+    border-radius: 50%;
+    background: repeating-conic-gradient(rgba(255,225,77,.55) 0 7deg, transparent 7deg 18deg);
+    -webkit-mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+            mask-image: radial-gradient(circle, #000 20%, transparent 68%);
+    animation: spin 40s linear infinite;
+    z-index: -1;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .north svg { width: 100%; height: 100%; display: block; overflow: visible; animation: twinkle 3.2s ease-in-out infinite; }
+  @keyframes twinkle {
+    0%, 100% { transform: scale(1) rotate(0); }
+    50%      { transform: scale(1.07) rotate(4deg); }
+  }
+
+  .claims {
+    font-family: "Anton", Impact, sans-serif;
+    text-transform: uppercase;
+    font-size: clamp(1.6rem, min(6.4vw, 7.5vh), 5.6rem);
+    line-height: 1.12;
+    letter-spacing: .01em;
+  }
+  .claims .line { display: block; margin: .12em 0; }
+  .claims .key {
+    display: inline-block;
+    position: relative;
+    isolation: isolate;
+    padding: 0 .22em;
+    margin-left: .1em;
+  }
+  .claims .key::before {
+    content: ""; position: absolute; inset: .04em -.02em;
+    border: .06em solid var(--ink);
+    box-shadow: .08em .08em 0 var(--ink);
+    z-index: -1;
+    opacity: 0; transform: scaleX(0);
+    transform-origin: left center;
+    transition: opacity .3s ease, transform .5s cubic-bezier(.2,1.4,.4,1);
+  }
+  .settled .claims .key::before { opacity: 1; transform: scaleX(1) rotate(var(--tilt)); }
+  .claims .line:nth-child(1) .key { --tilt: -1.5deg; }
+  .claims .line:nth-child(2) .key { --tilt: 1deg; }
+  .claims .line:nth-child(3) .key { --tilt: -1deg; }
+  .claims .line:nth-child(1) .key::before { background: var(--yellow); transition-delay: .05s; }
+  .claims .line:nth-child(2) .key::before { background: var(--cyan); transition-delay: .2s; }
+  .claims .line:nth-child(3) .key::before { background: var(--red); transition-delay: .35s; }
+  .claims .line:nth-child(3) .key { color: #fff; }
+  .claims .line:nth-child(3) .key .ch { text-shadow: .04em .04em 0 var(--ink); }
+
+  /* ---------- Mini-Buttons ---------- */
+  .mini {
+    position: fixed;
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: var(--paper);
+    color: var(--ink);
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    box-shadow: 3px 3px 0 var(--ink);
+    cursor: pointer;
+    z-index: 10;
+    transition: transform .15s ease, box-shadow .15s ease, background .2s, opacity .4s ease;
+  }
+  .mini:hover { background: var(--cyan); transform: translate(-1px,-1px); box-shadow: 4px 4px 0 var(--ink); }
+  .mini:active { transform: translate(2px,2px); box-shadow: 1px 1px 0 var(--ink); }
+  .mini svg { width: 20px; height: 20px; }
+  #fs { top: 16px; right: 16px; }
+  #back { bottom: 16px; left: 16px; opacity: 0; pointer-events: none; transform: scale(.5); }
+  body.phase-b #back { opacity: 1; pointer-events: auto; transform: none; }
+  body.phase-b #back:hover { background: var(--yellow); transform: rotate(-30deg); }
+
+  body.no-anim *, body.no-anim *::before { transition: none !important; }
+
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .finger, .rays, .north svg { animation: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="halftone"></div>
+  <div class="halftone pop"></div>
+
+  <main class="stage">
+    <section class="scene" id="sceneA" aria-label="Ausgangsbegriffe">
+      <h1 class="words" id="wordsA"></h1>
+      <div class="cta" id="cta">
+        <span class="finger" aria-hidden="true">👉</span>
+        <button class="go" id="go" type="button">Weiterdenken</button>
+      </div>
+    </section>
+
+    <section class="scene hidden" id="sceneB" aria-label="Weitergedacht">
+      <div class="north" aria-hidden="true">
+        <div class="rays"></div>
+        <svg viewBox="0 0 100 100">
+          <polygon fill="#FFE14D" stroke="#111" stroke-width="2.6" stroke-linejoin="round"
+            points="50,2 52.68,43.53 66.97,33.03 56.47,47.32 98,50 56.47,52.68 66.97,66.97 52.68,56.47 50,98 47.32,56.47 33.03,66.97 43.53,52.68 2,50 43.53,47.32 33.03,33.03 47.32,43.53"/>
+          <polygon fill="#FF3B5C" opacity=".9"
+            points="50,6 52.2,44 50,50"/>
+          <polygon fill="#FF3B5C" opacity=".9"
+            points="94,50 56,52.2 50,50"/>
+          <polygon fill="#FF3B5C" opacity=".9"
+            points="50,94 47.8,56 50,50"/>
+          <polygon fill="#FF3B5C" opacity=".9"
+            points="6,50 44,47.8 50,50"/>
+          <circle cx="50" cy="50" r="4.2" fill="#fff" stroke="#111" stroke-width="2"/>
+        </svg>
+      </div>
+      <h2 class="claims" id="claimsB"></h2>
+    </section>
+  </main>
+
+  <button class="mini" id="fs" type="button" aria-label="Vollbild umschalten" title="Vollbild (F)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" id="fsIcon">
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>
+    </svg>
+  </button>
+
+  <button class="mini" id="back" type="button" aria-label="Zurück zum Anfang" title="Zurück zum Anfang">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v5h5"/>
+    </svg>
+  </button>
+
+<script>
+(() => {
+  const POP = ['#FF3B5C', '#1EC8F0', '#FFE14D', '#2F49FF', '#111111'];
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  /* Text in einzelne Buchstaben zerlegen (Wörter bleiben zusammen) */
+  function fill(target, text) {
+    text.split(' ').forEach((w, i, all) => {
+      const word = document.createElement('span');
+      word.className = 'word';
+      for (const c of w) {
+        const s = document.createElement('span');
+        s.className = 'ch';
+        s.textContent = c;
+        word.appendChild(s);
+      }
+      target.appendChild(word);
+      if (i < all.length - 1) {
+        const sp = document.createElement('span');
+        sp.className = 'sp';
+        target.appendChild(sp);
+      }
+    });
+  }
+
+  function line(parent) {
+    const l = document.createElement('span');
+    l.className = 'line';
+    parent.appendChild(l);
+    return l;
+  }
+
+  /* Szene A */
+  const wordsA = document.getElementById('wordsA');
+  ['Schutz', 'Befähigung', 'Teilhabe'].forEach(t => fill(line(wordsA), t));
+
+  /* Szene B */
+  const claimsB = document.getElementById('claimsB');
+  [['Räume für', 'Reflexion'],
+   ['Ermöglichung von', 'Entwicklung'],
+   ['Ermächtigung zu', 'Gestaltung']].forEach(([pre, key]) => {
+    const l = line(claimsB);
+    fill(l, pre);
+    const k = document.createElement('span');
+    k.className = 'key';
+    fill(k, key);
+    l.appendChild(document.createTextNode(' '));
+    l.appendChild(k);
+  });
+
+  const sceneA = document.getElementById('sceneA');
+  const sceneB = document.getElementById('sceneB');
+  const cta = document.getElementById('cta');
+  let busy = false;
+
+  /* Buchstaben auseinanderfliegen lassen, neue einfliegen lassen */
+  function morph(from, to, onDone) {
+    busy = true;
+    const oldChars = [...from.querySelectorAll('.ch')];
+    const origins = oldChars.map(c => {
+      const r = c.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    });
+    const vw = innerWidth, vh = innerHeight;
+
+    if (reduced) {
+      from.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' }).onfinish = () => {
+        from.classList.add('hidden');
+        from.getAnimations().forEach(a => a.cancel());
+      };
+      to.classList.remove('hidden');
+      to.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500 }).onfinish = () => { busy = false; onDone(); };
+      return;
+    }
+
+    /* 1. Explosion */
+    oldChars.forEach(c => {
+      const a = rand(0, Math.PI * 2);
+      const d = rand(0.35, 0.9) * Math.max(vw, vh);
+      c.animate([
+        { transform: 'none', opacity: 1, color: getComputedStyle(c).color },
+        { offset: .35, transform: `translate(${Math.cos(a) * d * .3}px, ${Math.sin(a) * d * .3}px) rotate(${rand(-200, 200)}deg) scale(${rand(1, 1.8)})`, opacity: 1, color: pick(POP) },
+        { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) rotate(${rand(-720, 720)}deg) scale(${rand(.2, .6)})`, opacity: 0, color: pick(POP) }
+      ], { duration: rand(900, 1400), delay: rand(0, 180), easing: 'cubic-bezier(.3,0,.8,.6)', fill: 'forwards' });
+    });
+
+    /* 2. Neue Buchstaben kommen aus dem Wirbel */
+    setTimeout(() => {
+      to.classList.remove('hidden');
+      const newChars = [...to.querySelectorAll('.ch')];
+      let longest = 0;
+      newChars.forEach(c => {
+        const r = c.getBoundingClientRect();
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        const o = pick(origins);
+        const a = rand(0, Math.PI * 2), spread = rand(.15, .55) * Math.min(vw, vh);
+        const sx = o.x + Math.cos(a) * spread - cx;
+        const sy = o.y + Math.sin(a) * spread - cy;
+        const finalColor = getComputedStyle(c).color;
+        const dur = rand(1000, 1700), delay = rand(0, 450);
+        longest = Math.max(longest, dur + delay);
+        c.animate([
+          { transform: `translate(${sx}px, ${sy}px) rotate(${rand(-540, 540)}deg) scale(${rand(.3, 2.2)})`, opacity: 0, color: pick(POP) },
+          { offset: .3, opacity: 1, color: pick(POP) },
+          { offset: .85, color: finalColor },
+          { transform: 'none', opacity: 1, color: finalColor }
+        ], { duration: dur, delay, easing: 'cubic-bezier(.2,.9,.25,1.15)', fill: 'backwards' });
+      });
+
+      setTimeout(() => {
+        from.classList.add('hidden');
+        from.querySelectorAll('.ch').forEach(c => c.getAnimations().forEach(a => a.cancel()));
+        busy = false;
+        onDone();
+      }, longest + 50);
+    }, 450);
+  }
+
+  /* Vorwärts */
+  document.getElementById('go').addEventListener('click', () => {
+    if (busy) return;
+    cta.classList.add('gone');
+    morph(sceneA, sceneB, () => {
+      sceneB.classList.add('settled');
+      document.body.classList.add('phase-b');
+      document.getElementById('back').focus({ preventScroll: true });
+    });
+  });
+
+  /* Zurück */
+  document.getElementById('back').addEventListener('click', () => {
+    if (busy) return;
+    document.querySelectorAll('.ch').forEach(c => c.getAnimations().forEach(a => a.cancel()));
+    document.body.classList.add('no-anim');
+    sceneB.classList.remove('settled');
+    sceneB.classList.add('hidden');
+    document.body.classList.remove('phase-b');
+    sceneA.classList.remove('hidden');
+    cta.classList.remove('gone');
+    void document.body.offsetWidth; // Übergänge sofort abschließen
+    document.body.classList.remove('no-anim');
+    document.getElementById('go').focus({ preventScroll: true });
+  });
+
+  /* Vollbild */
+  const fsBtn = document.getElementById('fs');
+  const fsIcon = document.getElementById('fsIcon');
+  const ICON_ENTER = '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>';
+  const ICON_EXIT  = '<path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/>';
+  const isFs = () => document.fullscreenElement || document.webkitFullscreenElement;
+  function toggleFs() {
+    const el = document.documentElement;
+    if (isFs()) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+  }
+  fsBtn.addEventListener('click', toggleFs);
+  ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev =>
+    document.addEventListener(ev, () => { fsIcon.innerHTML = isFs() ? ICON_EXIT : ICON_ENTER; }));
+  document.addEventListener('keydown', e => {
+    if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) toggleFs();
+  });
+})();
+</script>
+</body>
+</html>
